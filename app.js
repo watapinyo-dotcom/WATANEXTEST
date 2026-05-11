@@ -2,8 +2,12 @@
 //  🔧 CONFIG — แก้ตรงนี้อย่างเดียว!
 // ============================================================
 
-const SHEET_CSV_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSmptKiROoXtoAsl1ZgySVn11jLlr3lxsvV6ou5dCiyZog6Xbt_GojizBt3XQNnNMJrAeVOJSstEi";
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSmptKiROoXtoAsl1ZgySVn11jLlr3lxsvV6ou5dCiyZog6Xbt_GojizBt3XQNnNMJrAeVOJSstEigy/pub?gid=1104057053&single=true&output=csv";
+
+// Wrap URL ผ่าน CORS proxy
+function getProxiedUrl(url) {
+  return "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
+}
 //                                         ↑ แทน YOUR_SHEET_ID ด้วย ID ของ Sheet คุณ
 //
 // วิธีหา SHEET_ID: เปิด Google Sheet แล้วดู URL
@@ -40,7 +44,7 @@ let pairingData = null; // cache ข้อมูลไว้ใน memory
 async function fetchPairingData() {
   if (pairingData) return pairingData; // ใช้ cache ถ้ามีแล้ว
 
-  const res = await fetch(SHEET_CSV_URL);
+  const res = await fetch(getProxiedUrl(SHEET_CSV_URL));
   if (!res.ok) throw new Error(`ดึงข้อมูลไม่ได้ (HTTP ${res.status})`);
 
   const text = await res.text();
@@ -102,6 +106,92 @@ function parseCSV(text) {
 // ============================================================
 
 async function lookupName() {
+  const input = document.getElementById("nameInput");
+  const query = input.value.trim();
+
+  if (!query) {
+    showError("กรุณากรอกชื่อก่อนนะ 😊");
+    input.focus();
+    return;
+  }
+
+  clearError();
+  setLoading(true);
+
+  try {
+    const data = await fetchPairingData();
+    const entry = data[query.toLowerCase()];
+
+    if (!entry) {
+      // ลอง fuzzy: หาชื่อที่มีคำนั้นอยู่
+      const suggestions = Object.values(data)
+        .filter((e) => e.name.toLowerCase().includes(query.toLowerCase()))
+        .map((e) => e.name)
+        .slice(0, 3);
+
+      let msg = `ไม่เจอชื่อ "${query}" ในรายการ`;
+      if (suggestions.length > 0) {
+        msg += `\nหมายถึง: ${suggestions.join(", ")} ไหม?`;
+      } else {
+        msg += `\nลองตรวจสอบการสะกดอีกครั้ง`;
+      }
+      showError(msg);
+      setLoading(false);
+      return;
+    }
+
+    if (!entry.partner) {
+      showError(`พบชื่อ "${entry.name}" แต่ยังไม่ได้รับการจับคู่`);
+      setLoading(false);
+      return;
+    }
+
+    showResult(entry.name, entry.partner);
+  } catch (err) {
+    showError(`❌ ${err.message}`);
+  }
+
+  setLoading(false);
+}
+
+function showResult(you, partner) {
+  document.getElementById("searchForm").style.display = "none";
+  document.getElementById("resultYou").textContent = you;
+  document.getElementById("resultPartner").textContent = partner;
+  document.getElementById("resultMsg").textContent = SUCCESS_MESSAGE;
+
+  const rc = document.getElementById("resultCard");
+  rc.classList.add("show");
+}
+
+function resetForm() {
+  document.getElementById("resultCard").classList.remove("show");
+  document.getElementById("searchForm").style.display = "block";
+  document.getElementById("nameInput").value = "";
+  clearError();
+  document.getElementById("nameInput").focus();
+}
+
+function setLoading(on) {
+  document.getElementById("loader").style.display = on ? "flex" : "none";
+  document.getElementById("searchBtn").disabled = on;
+}
+
+function showError(msg) {
+  const box = document.getElementById("errorBox");
+  box.innerHTML = `<div class="error-box">${msg.replace(/\n/g, "<br/>")}</div>`;
+}
+
+function clearError() {
+  document.getElementById("errorBox").innerHTML = "";
+}
+
+// Enter key support
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("nameInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") lookupName();
+  });
+});
   const input = document.getElementById("nameInput");
   const query = input.value.trim();
 
