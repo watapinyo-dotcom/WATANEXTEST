@@ -6,7 +6,17 @@ const RAW_SHEET_CSV_URL =
   "https://docs.google.com/spreadsheets/d/2PACX-1vSmptKiROoXtoAsl1ZgySVn11jLlr3lxsvV6ou5dCiyZog6Xbt_GojizBt3XQNnNMJrAeVOJSstEigy/pub?gid=0&single=true&output=csv";
 
 const SHEET_CSV_URL =
-  "https://corsproxy.io/?url=" + encodeURIComponent(RAW_SHEET_CSV_URL);
+  "https://api.allorigins.win/raw?url=" + encodeURIComponent(RAW_SHEET_CSV_URL);
+//                                         ↑ แทน YOUR_SHEET_ID ด้วย ID ของ Sheet คุณ
+//
+// วิธีหา SHEET_ID: เปิด Google Sheet แล้วดู URL
+//   https://docs.google.com/spreadsheets/d/  <<ID อยู่ตรงนี้>>  /edit
+//
+// วิธี Publish Sheet เป็น CSV:
+//   File → Share → Publish to web
+//   เลือก Sheet ที่ต้องการ → เลือกฟอร์แมต CSV → Publish
+//   แล้วเอา ID จาก URL ปกติมาใส่ด้านบน (ไม่ต้องใช้ URL จาก Publish)
+
 // ============================================================
 //  💡 รูปแบบ Google Sheet (row แรกต้องเป็น header)
 // ============================================================
@@ -32,11 +42,17 @@ let pairingData = null; // cache ข้อมูลไว้ใน memory
 
 async function fetchPairingData() {
   if (pairingData) return pairingData; // ใช้ cache ถ้ามีแล้ว
+  
+  console.log("🔄 กำลัง fetch:", SHEET_CSV_URL);
 
   const res = await fetch(SHEET_CSV_URL);
+  console.log("📡 Status:", res.status);
+  
   if (!res.ok) throw new Error(`ดึงข้อมูลไม่ได้ (HTTP ${res.status})`);
 
   const text = await res.text();
+  console.log("📄 CSV preview:", text.substring(0, 100) + "...");
+  
   const rows = parseCSV(text);
 
   if (rows.length === 0) throw new Error("Sheet ว่างเปล่า หรือ format ไม่ถูกต้อง");
@@ -63,6 +79,7 @@ async function fetchPairingData() {
   }
 
   pairingData = map;
+  console.log("✅ โหลดสำเร็จ:", Object.keys(map).length, "คน");
   return map;
 }
 
@@ -95,9 +112,7 @@ function parseCSV(text) {
 }
 
 // ============================================================
-//  UI Functions
-// ============================================================
-
+//  UI Functions (ไม่เปลี่ยน)
 async function lookupName() {
   const input = document.getElementById("nameInput");
   const query = input.value.trim();
@@ -144,6 +159,7 @@ async function lookupName() {
     showResult(entry.name, entry.partner);
   } catch (err) {
     showError(`❌ ${err.message}`);
+    console.error("Error:", err);
   }
 
   setLoading(false);
