@@ -3,7 +3,7 @@
 // ============================================================
 
 const SHEET_CSV_URL =
-  "https://drive.google.com/file/d/14vqoUlQLxscE4xvolALB7BEOPvsk8aol/view?usp=drivesdk";
+  "https://drive.google.com/file/d/1loM9xz23MafQSRnX7imY8Jnu-xfXstTn/view?usp=drivesdk";
 //                                         ↑ แทน YOUR_SHEET_ID ด้วย ID ของ Sheet คุณ
 //
 // วิธีหา SHEET_ID: เปิด Google Sheet แล้วดู URL
