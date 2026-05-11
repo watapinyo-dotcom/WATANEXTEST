@@ -6,8 +6,7 @@ const RAW_SHEET_CSV_URL =
   "https://docs.google.com/spreadsheets/d/2PACX-1vSmptKiROoXtoAsl1ZgySVn11jLlr3lxsvV6ou5dCiyZog6Xbt_GojizBt3XQNnNMJrAeVOJSstEigy/pub?gid=0&single=true&output=csv";
 
 const SHEET_CSV_URL =
-  "https://corsproxy.io/?" + encodeURIComponent(RAW_SHEET_CSV_URL);
-
+  "https://corsproxy.io/?url=" + encodeURIComponent(RAW_SHEET_CSV_URL);
 // ============================================================
 //  💡 รูปแบบ Google Sheet (row แรกต้องเป็น header)
 // ============================================================
