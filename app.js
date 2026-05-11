@@ -3,7 +3,7 @@
 // ============================================================
 
 const SHEET_CSV_URL =
-  "https://docs.google.com/spreadsheets/d/1ZdmryrpIS7BDWO87abv0peZssSIjiC-17D4oRKR5APQ/pub?gid=0&single=true&output=csv";
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSmptKiROoXtoAsl1ZgySVn11jLlr3lxsvV6ou5dCiyZog6Xbt_GojizBt3XQNnNMJrAeVOJSstEi";
 //                                         ↑ แทน YOUR_SHEET_ID ด้วย ID ของ Sheet คุณ
 //
 // วิธีหา SHEET_ID: เปิด Google Sheet แล้วดู URL
