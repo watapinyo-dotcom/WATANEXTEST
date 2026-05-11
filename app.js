@@ -2,17 +2,11 @@
 //  🔧 CONFIG — แก้ตรงนี้อย่างเดียว!
 // ============================================================
 
-const SHEET_CSV_URL =
+const RAW_SHEET_CSV_URL =
   "https://docs.google.com/spreadsheets/d/2PACX-1vSmptKiROoXtoAsl1ZgySVn11jLlr3lxsvV6ou5dCiyZog6Xbt_GojizBt3XQNnNMJrAeVOJSstEigy/pub?gid=0&single=true&output=csv";
-//                                         ↑ แทน YOUR_SHEET_ID ด้วย ID ของ Sheet คุณ
-//
-// วิธีหา SHEET_ID: เปิด Google Sheet แล้วดู URL
-//   https://docs.google.com/spreadsheets/d/  <<ID อยู่ตรงนี้>>  /edit
-//
-// วิธี Publish Sheet เป็น CSV:
-//   File → Share → Publish to web
-//   เลือก Sheet ที่ต้องการ → เลือกฟอร์แมต CSV → Publish
-//   แล้วเอา ID จาก URL ปกติมาใส่ด้านบน (ไม่ต้องใช้ URL จาก Publish)
+
+const SHEET_CSV_URL =
+  "https://corsproxy.io/?" + encodeURIComponent(RAW_SHEET_CSV_URL);
 
 // ============================================================
 //  💡 รูปแบบ Google Sheet (row แรกต้องเป็น header)
@@ -54,7 +48,9 @@ async function fetchPairingData() {
 
   if (nameIdx === -1 || partnerIdx === -1) {
     throw new Error(
-      `ไม่เจอคอลัมน์ที่ถูกต้อง\nต้องมีคอลัมน์ "name" และ "partner"\nเจอ: ${headers.join(", ")}`
+      `ไม่เจอคอลัมน์ที่ถูกต้อง
+ต้องมีคอลัมน์ "name" และ "partner"
+เจอ: ${headers.join(", ")}`
     );
   }
 
@@ -74,7 +70,9 @@ async function fetchPairingData() {
 // Simple CSV parser (handles quoted fields)
 function parseCSV(text) {
   const rows = [];
-  const lines = text.split(/\r?\n/);
+  const lines = text.split(/
+?
+/);
   for (const line of lines) {
     if (!line.trim()) continue;
     const cols = [];
@@ -127,9 +125,11 @@ async function lookupName() {
 
       let msg = `ไม่เจอชื่อ "${query}" ในรายการ`;
       if (suggestions.length > 0) {
-        msg += `\nหมายถึง: ${suggestions.join(", ")} ไหม?`;
+        msg += `
+หมายถึง: ${suggestions.join(", ")} ไหม?`;
       } else {
-        msg += `\nลองตรวจสอบการสะกดอีกครั้ง`;
+        msg += `
+ลองตรวจสอบการสะกดอีกครั้ง`;
       }
       showError(msg);
       setLoading(false);
@@ -175,7 +175,8 @@ function setLoading(on) {
 
 function showError(msg) {
   const box = document.getElementById("errorBox");
-  box.innerHTML = `<div class="error-box">${msg.replace(/\n/g, "<br/>")}</div>`;
+  box.innerHTML = `<div class="error-box">${msg.replace(/
+/g, "<br/>")}</div>`;
 }
 
 function clearError() {
