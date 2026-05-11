@@ -3,7 +3,7 @@
 // ============================================================
 
 const SHEET_CSV_URL =
-  "https://api.allorigins.win/raw?url=https://docs.google.com/spreadsheets/d/2PACX-1vSmptKiROoXtoAsl1ZgySVn11jLlr3lxsvV6ou5dCiyZog6Xbt_GojizBt3XQNnNMJrAeVOJSstEigy/pub?gid=0&single=true&output=csv";
+  "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://docs.google.com/spreadsheets/d/2PACX-1vSmptKiROoXtoAsl1ZgySVn11jLlr3lxsvV6ou5dCiyZog6Xbt_GojizBt3XQNnNMJrAeVOJSstEigy/pub?gid=0&single=true&output=csv");
 //                                         ↑ แทน YOUR_SHEET_ID ด้วย ID ของ Sheet คุณ
 //
 // วิธีหา SHEET_ID: เปิด Google Sheet แล้วดู URL
@@ -85,7 +85,6 @@ function parseCSV(text) {
   const rows = [];
   const lines = text.split(/
 ?
-/);
   for (const line of lines) {
     if (!line.trim()) continue;
     const cols = [];
@@ -142,7 +141,12 @@ async function lookupName() {
         msg += `
 ลองตรวจสอบการสะกดอีกครั้ง`;
       }
-      showError(msg);
+      function showError(msg) {
+  const box = document.getElementById("errorBox");
+  box.innerHTML = `<div class="error-box">${msg.replace(/
+/g, "<br/>")}</div>`;
+                                          }
+                                          }
       setLoading(false);
       return;
     }
