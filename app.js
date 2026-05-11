@@ -1,12 +1,11 @@
 // ============================================================
-// 🔧 CONFIG
+// 🔧 FAST + STABLE VERSION
+// ใช้ได้กับ GitHub Pages + มือถือ
 // ============================================================
 
+// ✅ ใช้ Google Sheet CSV ตรง ๆ (เร็วกว่า allorigins มาก)
 const SHEET_CSV_URL =
-  "https://api.allorigins.win/raw?url=" +
-  encodeURIComponent(
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vSmptKiROoXtoAsl1ZgySVn11jLlr3lxsvV6ou5dCiyZog6Xbt_GojizBt3XQNnNMJrAeVOJSstEigy/pub?gid=0&single=true&output=csv"
-  );
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSmptKiROoXtoAsl1ZgySVn11jLlr3lxsvV6ou5dCiyZog6Xbt_GojizBt3XQNnNMJrAeVOJSstEigy/pub?gid=0&single=true&output=csv";
 
 const SUCCESS_MESSAGE = "เก็บเป็นความลับนะ! 🤫 ห้ามบอกใคร";
 
@@ -17,11 +16,28 @@ let pairingData = null;
 // ============================================================
 
 async function fetchPairingData() {
+  // ใช้ cache ถ้าโหลดแล้ว
   if (pairingData) return pairingData;
 
-  console.log("🔄 Fetching CSV...");
+  console.log("🔄 Loading CSV...");
 
-  const res = await fetch(SHEET_CSV_URL);
+  // กันโหลดค้าง
+  const controller = new AbortController();
+
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, 8000);
+
+  let res;
+
+  try {
+    res = await fetch(SHEET_CSV_URL, {
+      signal: controller.signal,
+      cache: "no-store",
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
 
   console.log("📡 Status:", res.status);
 
@@ -31,14 +47,19 @@ async function fetchPairingData() {
 
   const text = await res.text();
 
-  console.log("📄 CSV:", text.substring(0, 100));
+  if (!text.trim()) {
+    throw new Error("Google Sheet ว่าง");
+  }
+
+  console.log("📄 CSV Preview:", text.substring(0, 100));
 
   const rows = parseCSV(text);
 
   if (rows.length === 0) {
-    throw new Error("Google Sheet ว่าง หรืออ่านไม่ได้");
+    throw new Error("อ่าน CSV ไม่สำเร็จ");
   }
 
+  // header
   const headers = rows[0].map((h) =>
     h.trim().toLowerCase()
   );
@@ -89,28 +110,29 @@ function parseCSV(text) {
 
     const cols = [];
 
-    let cur = "";
-    let inQuote = false;
+    let current = "";
+    let inQuotes = false;
 
     for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
+      const char = line[i];
 
-      if (ch === '"') {
-        if (inQuote && line[i + 1] === '"') {
-          cur += '"';
+      if (char === '"') {
+        // escaped quote
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"';
           i++;
         } else {
-          inQuote = !inQuote;
+          inQuotes = !inQuotes;
         }
-      } else if (ch === "," && !inQuote) {
-        cols.push(cur);
-        cur = "";
+      } else if (char === "," && !inQuotes) {
+        cols.push(current);
+        current = "";
       } else {
-        cur += ch;
+        current += char;
       }
     }
 
-    cols.push(cur);
+    cols.push(current);
 
     rows.push(cols);
   }
@@ -142,6 +164,7 @@ async function lookupName() {
 
     const entry = data[query.toLowerCase()];
 
+    // ไม่เจอชื่อ
     if (!entry) {
       const suggestions = Object.values(data)
         .filter((e) =>
@@ -163,18 +186,24 @@ async function lookupName() {
       return;
     }
 
+    // ยังไม่มีคู่
     if (!entry.partner) {
       showError(`"${entry.name}" ยังไม่มีคู่`);
       setLoading(false);
       return;
     }
 
+    // สำเร็จ
     showResult(entry.name, entry.partner);
 
   } catch (err) {
     console.error(err);
 
-    showError(`❌ ${err.message}`);
+    if (err.name === "AbortError") {
+      showError("โหลดข้อมูลช้าเกินไป ลองใหม่อีกครั้ง 😭");
+    } else {
+      showError(`❌ ${err.message}`);
+    }
   }
 
   setLoading(false);
@@ -185,11 +214,13 @@ async function lookupName() {
 // ============================================================
 
 function showResult(you, partner) {
-  document.getElementById("searchForm").style.display = "none";
+  document.getElementById("searchForm").style.display =
+    "none";
 
   document.getElementById("resultYou").textContent = you;
 
-  document.getElementById("resultPartner").textContent = partner;
+  document.getElementById("resultPartner").textContent =
+    partner;
 
   document.getElementById("resultMsg").textContent =
     SUCCESS_MESSAGE;
@@ -234,15 +265,22 @@ function clearError() {
 }
 
 // ============================================================
-// ENTER KEY
+// ENTER KEY SUPPORT
 // ============================================================
 
 document.addEventListener("DOMContentLoaded", () => {
   const input = document.getElementById("nameInput");
+
+  if (!input) {
+    console.error("❌ ไม่เจอ #nameInput");
+    return;
+  }
 
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       lookupName();
     }
   });
+
+  console.log("✅ Ready");
 });
